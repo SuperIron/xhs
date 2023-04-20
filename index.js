@@ -87,9 +87,10 @@ class Xhs {
                     date,
                     collect,
                 });
-                console.log(this.list);
+                this.log(this.list);
 
                 if (!(this.list.length % 45)) {
+                    this.log(`Resting ${REST_DELAY}s`)
                     await this.sleep(REST_DELAY)
                 }
             }
@@ -115,6 +116,11 @@ class Xhs {
             XLSX.writeFile(wb, "xhs.xlsx");
         };
         document.getElementsByTagName("head")[0].appendChild(script);
+    }
+
+    // 日志
+    log(msg) {
+        console.log(`Xhs...`, msg)
     }
 }
 
