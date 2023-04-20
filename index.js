@@ -3,13 +3,14 @@ const MAX_COUNT = 100;
 // 操作延迟，单位秒
 const HANDLE_DELAY = 2;
 // 休息延迟，单位秒
-const REST_DELAY = 1;
+const REST_DELAY = 180;
 // 爬取的点赞数
 const MIN_LIKES = 100;
 
 
 class Xhs {
     list = [];
+    round = 1;
 
     constructor() {
         setTimeout(() => {
@@ -35,9 +36,6 @@ class Xhs {
         try {
             await this.getList();
             await this.sleep(HANDLE_DELAY);
-            if (!(this.list.length % 3)) {
-                await this.sleep(REST_DELAY)
-            }
             this.reload();
             this.loop();
         } catch (err) {
@@ -90,6 +88,10 @@ class Xhs {
                     collect,
                 });
                 console.log(this.list);
+
+                if (!(this.list.length % 45)) {
+                    await this.sleep(REST_DELAY)
+                }
             }
         }
     }
