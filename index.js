@@ -3,7 +3,7 @@ const MAX_COUNT = 100;
 // 操作延迟，单位秒
 const HANDLE_DELAY = 2;
 // 休息延迟，单位秒
-const REST_DELAY = 180;
+const REST_DELAY = 1;
 
 
 class Xhs {
@@ -16,7 +16,7 @@ class Xhs {
     }
 
     // 睡眠
-    async slepp(delay) {
+    async sleep(delay) {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 resolve();
@@ -33,11 +33,12 @@ class Xhs {
         try {
             await this.getList();
             if (!(this.list.length % 3)) {
-                await this.slepp(REST_DELAY)
+                await this.sleep(REST_DELAY)
             }
             this.reload();
             this.loop();
         } catch (err) {
+            console.error(err)
             this.export();
         }
     }
@@ -56,7 +57,7 @@ class Xhs {
 
             // 进入详情页
             item.querySelectorAll("a")[1].click();
-            await this.slepp(HANDLE_DELAY);
+            await this.sleep(HANDLE_DELAY);
 
             // 正文
             let content = "";
@@ -70,7 +71,7 @@ class Xhs {
                 ".collect-wrapper .count"
             ).innerText;
             document.querySelector(".close").click();
-            await this.slepp(HANDLE_DELAY);
+            await this.sleep(HANDLE_DELAY);
 
             // 添加到列表
             this.list.push({
