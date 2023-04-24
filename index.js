@@ -1,11 +1,54 @@
+
+
 // 爬取的数据量
-const MAX_COUNT = 100;
+const MAX_COUNT = 10;
 // 操作延迟，单位秒
 const HANDLE_DELAY = 2;
 // 休息延迟，单位秒
 const REST_DELAY = 180;
 // 爬取的点赞数
 const MIN_LIKES = 100;
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+/**
+ * 通过二进制流下载文件
+ *
+ * @param blob      二进制流
+ * @param fileName  文件名称
+ */
+const useBlob = (blob, fileName) => {
+    const link = document.createElement("a");
+    const href = URL.createObjectURL(blob);
+    link.href = href;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href); // 释放掉blob对象
+};
+/**
+ * 通过url下载文件，需要后端支持跨域
+ *
+ * @param url       文件地址
+ * @param fileName  文件名称
+ */
+const useURL = (url, fileName) => {
+    fetch(url).then((res) => __awaiter(void 0, void 0, void 0, function* () { return useBlob(yield res.blob(), fileName); }));
+};
+const download = {
+    useBlob,
+    useURL,
+};
+
+
 
 
 class Xhs {
@@ -30,7 +73,7 @@ class Xhs {
     // 循环
     async loop() {
         if (this.list.length >= MAX_COUNT) {
-            this.export();
+            this.exportXlsx();
             return;
         }
         try {
@@ -40,7 +83,7 @@ class Xhs {
             this.loop();
         } catch (err) {
             console.error(err)
-            this.export();
+            this.exportXlsx();
         }
     }
 
@@ -62,7 +105,9 @@ class Xhs {
             // 收藏数
             let collect = ''
 
-            if (Number(like) > MIN_LIKES) {
+            const likeCount = like.indexOf('w') > -1 ? like.replace('w', '') * 10000 : Number(like)
+
+            if (likeCount > MIN_LIKES) {
                 // 进入详情页
                 item.querySelectorAll("a")[1].click();
                 await this.sleep(HANDLE_DELAY);
@@ -80,12 +125,12 @@ class Xhs {
 
                 // 添加到列表
                 this.list.push({
-                    link,
-                    like,
                     title,
+                    like,
+                    collect,
                     content,
                     date,
-                    collect,
+                    link,
                 });
                 this.log(this.list);
 
@@ -103,7 +148,7 @@ class Xhs {
     }
 
     // 导出
-    export() {
+    exportXlsx() {
         const xlsx =
             "https://cdn.bootcdn.net/ajax/libs/xlsx/0.16.9/xlsx.full.min.js";
         const script = document.createElement("script");
@@ -111,11 +156,25 @@ class Xhs {
         script.setAttribute("src", xlsx);
         script.onload = () => {
             const wb = XLSX.utils.book_new();
-            const fdXslxws = XLSX.utils.json_to_sheet(this.list);
-            XLSX.utils.book_append_sheet(wb, fdXslxws, "sheet1");
+            const sheet = XLSX.utils.json_to_sheet(this.list);
+            sheet["!cols"] = [
+                { wch: 40 },
+                { wch: 10 },
+                { wch: 10 },
+                { wch: 80 },
+                { wch: 20 },
+                { wch: 80 },
+            ];
+            XLSX.utils.book_append_sheet(wb, sheet, "sheet1");
             XLSX.writeFile(wb, "xhs.xlsx");
         };
         document.getElementsByTagName("head")[0].appendChild(script);
+    }
+
+    exportJson() {
+        const json = JSON.stringify(this.list);
+        const blob = new Blob([json], { type: "text/json" })
+        download.useBlob(blob, 'notes.json')
     }
 
     // 日志
@@ -123,5 +182,6 @@ class Xhs {
         console.log(`Xhs...`, msg)
     }
 }
+
 
 new Xhs();
